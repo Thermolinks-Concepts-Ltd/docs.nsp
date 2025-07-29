@@ -1,0 +1,43 @@
+# Site settings
+title: "Nigeria Startup Portal (NSP) Ecosystem - Complete User Guide"
+description: "Unlocking Nigeria's Innovation Potential with the Nigeria Startup Act"
+baseurl: ""
+url: "https://thermolinks-concepts-ltd.github.io/docs.nsp"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+
+# Exclude from processing
+exclude:
+- .git/
+- .gitignore
+- README.md
+- node_modules/
+- vendor/
+- Gemfile
+- Gemfile.lock
+
+# Include files
+include:
+- main.md
+
+# Theme settings
+plugins:
+- jekyll-feed
+- jekyll-sitemap
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+- scope:
+    path: ""
+    type: "pages"
+  values:
+    layout: "default"
