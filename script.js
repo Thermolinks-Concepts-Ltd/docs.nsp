@@ -15,7 +15,6 @@ const elements = {
 
 // State
 let headings = [];
-let isLoading = true;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', init);
@@ -66,7 +65,6 @@ async function loadMarkdown() {
         const response = await fetch('main.md');
         const markdown = await response.text();
         renderMarkdown(markdown);
-        generateTableOfContents(markdown);
         hideLoading();
     } catch (error) {
         console.error('Error loading markdown:', error);
@@ -86,6 +84,9 @@ function renderMarkdown(markdown) {
     const html = marked.parse(markdown);
     elements.content.innerHTML = html;
 
+    // Process headings from rendered content
+    processHeadingsFromContent();
+
     // Add smooth scrolling to anchor links
     addSmoothScrolling();
 
@@ -93,23 +94,38 @@ function renderMarkdown(markdown) {
     addCopyButtons();
 }
 
-function generateTableOfContents(markdown) {
-    const headingRegex = /^(#{1,6})\s+(.+)$/gm;
-    const matches = [...markdown.matchAll(headingRegex)];
+function processHeadingsFromContent() {
+    const contentHeadings = elements.content.querySelectorAll('h1, h2, h3, h4, h5, h6');
 
-    headings = matches.map((match, index) => ({
-        level: match[1].length,
-        text: match[2].trim(),
-        id: `heading-${index}`,
-        element: null
-    }));
+    headings = Array.from(contentHeadings).map((element, index) => {
+        // Create a safe ID from the heading text
+        const safeText = element.textContent.trim()
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-');
+        const id = safeText || `heading-${index}`;
+
+        // Ensure unique ID
+        let uniqueId = id;
+        let counter = 1;
+        while (document.getElementById(uniqueId)) {
+            uniqueId = `${id}-${counter}`;
+            counter++;
+        }
+
+        element.id = uniqueId;
+
+        return {
+            level: parseInt(element.tagName.substring(1)),
+            text: element.textContent.trim(),
+            id: uniqueId,
+            element: element
+        };
+    });
 
     // Create TOC HTML
     const tocHtml = createTOCHTML(headings);
     elements.toc.innerHTML = tocHtml;
-
-    // Update heading IDs in content
-    updateHeadingIDs();
 }
 
 function createTOCHTML(headings) {
@@ -117,16 +133,12 @@ function createTOCHTML(headings) {
     let currentLevel = 0;
     let openLists = [];
 
-    headings.forEach((heading, index) => {
+    headings.forEach((heading) => {
         const level = heading.level;
 
         if (level > currentLevel) {
             for (let i = currentLevel; i < level; i++) {
-                if (i === 0) {
-                    html += '<ul>';
-                } else {
-                    html += '<ul>';
-                }
+                html += '<ul>';
                 openLists.push('ul');
             }
         } else if (level < currentLevel) {
@@ -147,17 +159,6 @@ function createTOCHTML(headings) {
     }
 
     return html;
-}
-
-function updateHeadingIDs() {
-    const contentHeadings = elements.content.querySelectorAll('h1, h2, h3, h4, h5, h6');
-
-    contentHeadings.forEach((element, index) => {
-        if (headings[index]) {
-            element.id = headings[index].id;
-            headings[index].element = element;
-        }
-    });
 }
 
 function addSmoothScrolling() {
